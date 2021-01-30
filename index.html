@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>IFrame playground</title>
+
+  <style>
+    #container {
+      display: flex;
+    }
+
+    #simpleList {
+      flex: 1;
+    }
+
+    #iframe {
+      flex: 1;
+      height: 500px;
+    }
+
+  </style>
+</head>
+<body>
+<!-- Latest compiled and minified CSS -->
+<link
+        rel="stylesheet"
+        href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css"
+/>
+
+<!-- Latest Sortable -->
+<script src="Sortable.js"></script>
+
+<!-- <div style="height: 80vh;"></div> -->
+<!-- Simple List -->
+
+<div id="container">
+  <div id="simpleList" style="user-select: none;" class="list-group">
+    <div id="dragEl" class="list-group-item">
+      This is <a href="http://rubaxa.github.io/Sortable/">Sortable</a>
+    </div>
+    <div class="list-group-item">It works with Bootstrap...</div>
+    <div class="list-group-item">...out of the box.</div>
+    <div id="overEl" class="list-group-item">
+      It has support for touch devices.
+    </div>
+    <div class="list-group-item">Just drag some elements around.</div>
+  </div>
+  <iframe id="iframe" src="http://127.0.0.1:5000/frame.html" frameborder="0"></iframe>
+</div>
+<script>
+  (function () {
+    Sortable.create(simpleList, {
+      forceFallback: true,
+      supportPointer: false,
+      // dragoverBubble: true,
+      // forceFallback: false,  // ignore the HTML5 DnD behaviour and force the fallback to kick in
+
+      // fallbackClass: "sortable-fallback",  // Class name for the cloned DOM Element when using forceFallback
+      //   fallbackOnBody: true,
+      group: "shared",
+      onChoose(evt) {
+        // debugger
+        rect = iframe.getBoundingClientRect();
+
+        iframe.contentWindow.postMessage(
+          {
+            type: "onChoose",
+            data: {
+              innerHTML: evt.item.innerHTML,
+            },
+          },
+          "*"
+        );
+      },
+      onEnd() {
+        iframe.contentWindow.postMessage(
+          {
+            type: "onEnd",
+            data: {},
+          },
+          "*"
+        );
+      },
+    });
+
+    var iframe = document.getElementById('iframe');
+
+    // iframe.src = "http://127.0.0.1:5000/frame.html";
+    // iframe.width = "100%";
+    // iframe.height = "500px";
+    //
+    // document.body.appendChild(iframe);
+
+    document.addEventListener("mouseup", (e) => {
+      // debugger
+      iframe.contentWindow.postMessage(
+        {
+          type: "onEnd",
+          data: {},
+        },
+        "*"
+      );
+    });
+
+    let rect = iframe.getBoundingClientRect();
+    window.onmessage = function (e) {
+      if (e.data.type == "mousemove") {
+        // console.log();
+        let pos = {
+          clientX: e.data.data.clientX + rect.left,
+          clientY: e.data.data.clientY + rect.top,
+        };
+
+        document.dispatchEvent(new MouseEvent("mousemove", pos));
+      } else if (e.data.type === "mouseup") {
+        let pos = {
+          clientX: e.data.data.clientX + rect.left,
+          clientY: e.data.data.clientY + rect.top,
+        };
+
+        document.dispatchEvent(new MouseEvent("mouseup", pos));
+      }
+    };
+  })();
+</script>
+</body>
+</html>
